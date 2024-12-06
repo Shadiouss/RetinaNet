@@ -1,5 +1,5 @@
 from train import run_train
-from evaluate import run_evaluate
+from validate import run_evaluate
 import run_split
 from deepforest import main
 from predict import process_all_tif_files_in_folder  # Import the function from predict.py
