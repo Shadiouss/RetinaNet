@@ -9,14 +9,14 @@ warnings.filterwarnings("ignore")
 # Define run_split arguments
 args_split = {
     "annotations": [  # List of paths to shapefile annotations
-        r"Q:\MnD\projects\2024_11_01_object_detection\singletreedetection\tif1_rgb.shp",
-        r"Q:\MnD\projects\2024_11_01_object_detection\training_raster_1\annotations_1_clipped_redone.shp"
+        r"Path\to\shapefile.shp",
+        r"Path\to\shapefile.shp"
     ],
     "image_path": [  # List of paths to corresponding TIFF images
-         r"Q:\MnD\projects\2024_11_01_object_detection\singletreedetection\dop1.tif",
-         r"Q:\MnD\projects\2024_11_01_object_detection\training_raster_1\2020_summer_clipped_for_labels_25833.tif"
+         r"Path\to\raster.tif",
+         r"Path\to\raster.tif"
     ],
-    "directory_to_save_crops": r"Q:\MnD\projects\2024_11_01_object_detection\Deepforest\github_script\test",  # Directory to save cropped image tiles
+    "directory_to_save_crops": r"Path\to\output_folder",  # Directory to save cropped image tiles
     "patch_size": 400,  # Size of each crop (e.g., `400x400` pixels)
     "patch_overlap": 0.0,  # Overlap percentage between cropped tiles
     "merge_name": "csv_ref_merged.csv",  # Name of the merged output CSV file
@@ -28,7 +28,7 @@ args_split = {
 
 # Define train arguments
 args_train = {
-    "epochs": 2,  # Total number of epochs to train the model
+    "epochs": 20,  # Total number of epochs to train the model
     "valid_every_n_epochs": 1,  # Perform validation after every n epochs
     "check_val_every_n_epoch": 1,  # Save model checkpoints every n epochs ( -1 saved the last and best accuracy model)
     "augmentation_ratio": 0.5,  # Probability of applying data augmentation
@@ -36,16 +36,15 @@ args_train = {
     "monitor": "val_classification",  # Metric to monitor during training or 'iou'
     "score_thresh": 0.5,  # Score threshold for filtering predictions
     "nms_thresh": 0.5,  # Non-Max Suppression (NMS) threshold for overlapping predictions
-    "optimizer_type": "Adam",  # Optimizer type (e.g., 'SGD', 'Adam', 'AdamW')
+    "optimizer_type": "SGD",  # Optimizer type (e.g., 'SGD', 'Adam', 'AdamW')
     "learning_rate": 0.001,  # Initial learning rate for the optimizer
     "optimizer_factor": 0.1,  # Factor by which the learning rate is reduced on a plateau
     "optimizer_patience": 5,  # Number of epochs with no improvement to wait before reducing LR
     "optimizer_threshold": 0.001,  # Minimum change in the monitored metric to qualify as an improvement
-    "model_save_dir": r"Q:\MnD\projects\2024_11_01_object_detection\Deepforest\github_script\checkpoints",  # Directory to save model checkpoints
+    "model_save_dir": r"Path\to\output_model_saved_folder",  # Directory to save model checkpoints
     "tb_log_dir": "tb_logs/deepforest",  # Directory to save TensorBoard logs
-    "train_csv": r"N:\MnD\projects\2024_11_01_object_detection\retnanet_data\train_csv_ref_merged_clean.csv",  # Path to the training dataset CSV file
-    "val_csv": r"N:\MnD\projects\2024_11_01_object_detection\retnanet_data\test_csv_ref_merged.csv",  # Path to the validation dataset CSV file
-    "predictions_save_dir": r"Q:\MnD\projects\2024_11_01_object_detection\Deepforest\github_script\predictions",  # Directory to save model predictions
+    "train_csv": r"Path\to\train_csv_ref_merged.csv",  # Path to the training dataset CSV file
+    "val_csv": r"Path\to\test_csv_ref_merged.csv",  # Path to the validation dataset CSV file
     "tensorboard_port": 6006,  # Port for TensorBoard logging
     "default_label": "Tree"  # Default label for missing values in the dataset
 }
@@ -53,21 +52,21 @@ args_train = {
 
 # Define evaluation arguments
 args_eval = {
-    "model_checkpoints": [  # List of model checkpoint paths to evaluate
-       r"Q:\MnD\projects\2024_11_01_object_detection\Deepforest\github_script\checkpoints\best_model-epoch01-val_classification0.2652.ckpt"
+    "model_checkpoints": [  # List of model checkpoint paths to evaluate or just the best one
+       r"Path\to\best_model-epoch01-val_classification0.2652.ckpt"
     ],
-    "evaluation_csv": r"N:\MnD\projects\2024_11_01_object_detection\val\val\val_csv_ref_merged.csv",  # CSV file containing test dataset information
-    "evaluation_root_dir": r"N:\MnD\projects\2024_11_01_object_detection\val\val",  # Root directory for evaluation data
-    "predictions_save_dir": r"Q:\MnD\projects\2024_11_01_object_detection\Deepforest\github_script\predictions",  # Directory to save evaluation predictions
+    "evaluation_csv": r"Path\to\val_csv_ref_merged.csv",  # CSV file containing test dataset information
+    "evaluation_root_dir": r"PAth\to\tile_images\folder",  # Root directory for evaluation data
+    "predictions_save_dir": r"Path\to\evaluation\predictions\folder",  # Directory to save evaluation predictions
 }
 
 
 # Define prediction arguments
 args_predict = {
-    "model_path": r"Q:\MnD\projects\2024_11_01_object_detection\Deepforest\github_script\checkpoints\best_model-epoch01-val_classification0.2652.ckpt",  # Model path for prediction
-    "folder_path": r"Q:\MnD\projects\2024_11_01_object_detection",  # Folder containing TIFF files for prediction
-    "savedir": r"Q:\MnD\projects\2024_11_01_object_detection\frankfurt\Shapefiles",  # Directory to save shapefiles generated by predictions
-    "small_tiles": True,  # Whether to use tile-based prediction for large images
+    "model_path": r"Path\to\model_saved\best_model-epoch01-val_classification0.2652.ckpt",  # Model path for prediction
+    "folder_path": r"Path\to\target\folder",  # Folder containing TIFF files for prediction
+    "savedir": r"Path\to\save\Shapefiles\predictions",  # Directory to save shapefiles generated by predictions
+    "small_tiles": True,  # Whether to use tile-based prediction for large images, False if the image is small 
     "patch_size": 400,    # Size of each tile used during prediction
     "patch_overlap": 0.15,  # Overlap percentage between adjacent tiles
     "iou_threshold": 0.4,   # Intersection over Union (IoU) threshold for filtering predictions
