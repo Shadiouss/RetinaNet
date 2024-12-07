@@ -155,9 +155,9 @@ def initialize_model(args):
     model.scheduler = ReduceLROnPlateau(
         optimizer=model.optimizer,
         mode=mode,
-        factor=args["optimizer_factor"],
+        #factor=args["optimizer_factor"],
         patience=args["optimizer_patience"],
-        threshold=args["optimizer_threshold"],
+        #threshold=args["optimizer_threshold"],
         verbose=True,
     )
 
@@ -190,7 +190,7 @@ def initialize_trainer(args):
         filename=f"best_model-epoch{{epoch:02d}}-{monitor}{{{monitor}:.4f}}",
         monitor=monitor,
         mode=mode,
-        save_top_k=1,
+        save_top_k=args["save_top_k"],
         verbose=True,
         auto_insert_metric_name=False,
     )
@@ -199,7 +199,7 @@ def initialize_trainer(args):
 
     trainer = Trainer(
         max_epochs=args["epochs"],
-        check_val_every_n_epoch=args["check_val_every_n_epoch"],
+       # check_val_every_n_epoch=args["check_val_every_n_epoch"],
         callbacks=[checkpoint_callback, IOULogger(), EarlyStopping(
             monitor=monitor,
             patience=args["optimizer_patience"],
@@ -208,11 +208,11 @@ def initialize_trainer(args):
         ), LearningRateMonitor(logging_interval="step")],
         logger=logger,
         log_every_n_steps=10,
-        val_check_interval=0.5,
+        val_check_interval=1.0,
         devices=1,
         accelerator=accelerator,
         precision=16,
-        gradient_clip_val=0.5,
+        #gradient_clip_val=0.5,
     )
 
     return trainer
