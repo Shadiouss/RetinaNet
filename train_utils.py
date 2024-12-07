@@ -84,6 +84,9 @@ def selective_augmentation(batch, train_transform, augmentation_ratio):
 
     augmented_images = []
     for i, img in enumerate(images):
+        if torch.isnan(img).any():
+            print(f"NaN detected in raw image at index {i}, replacing with 0.")
+            img[torch.isnan(img)] = 0
         augmented_images.append(train_transform(img) if i in indices_to_augment else img)
 
     if log_augmentation_details_once:
@@ -133,6 +136,8 @@ def initialize_model(args):
     model.config["validation"]["csv_file"] = args["val_csv"]
     model.config["validation"]["root_dir"] = os.path.dirname(args["val_csv"])
     model.config["batch_size"] = args["batch_size"]
+    model.config["num_classes"] = args["num_classes"]  # Set the number of classes
+
 
     model.train_transform = args.get("train_transform", None)
     model.val_transform = args.get("val_transform", None)
@@ -168,7 +173,13 @@ def initialize_model(args):
 class IOULogger(Callback):
     def on_validation_epoch_end(self, trainer, pl_module):
         if "iou" in trainer.callback_metrics:
-            print(f"[Epoch {trainer.current_epoch}] IoU: {trainer.callback_metrics['iou']:.4f}")
+            iou_value = trainer.callback_metrics["iou"]
+            if isinstance(iou_value, torch.Tensor):  # Check if it's a tensor
+                iou_value = iou_value.item()  # Convert tensor to float
+            print(f"[Epoch {trainer.current_epoch}] IoU: {iou_value} (Type: {type(iou_value)})")
+            assert isinstance(iou_value, float), "IoU metric must be a float."
+
+
 
 
 class LearningRateLogger(Callback):
