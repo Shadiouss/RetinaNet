@@ -44,7 +44,8 @@ args_train = {
     "train_csv": r"Q:\MnD\projects\2024_11_01_object_detection\Deepforest\github_script\test\train_csv_ref_merged.csv",  # Path to the training dataset CSV file
     "val_csv": r"Q:\MnD\projects\2024_11_01_object_detection\Deepforest\github_script\test\test_csv_ref_merged.csv",  # Path to the validation dataset CSV file
     "tensorboard_port": 6006,  # Port for TensorBoard logging
-    "default_label": "Tree"  # Default label for missing values in the dataset
+    "default_label": "Tree",  # Default label for missing values in the dataset
+    "num_classes": 1
 }
 
 
