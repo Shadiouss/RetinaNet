@@ -127,31 +127,3 @@ def preprocess(annotations, image_path, directory_to_save_crops, patch_size=400,
         print(f"Splitting annotations into train/test with split ratio: {split}")
         annotations_split(directory_to_save_crops, merge_name, split, seed=seed)
 
-
-
-# Merge all the data into one csv file 
-def annotations_merge(path, file_name):
-    """
-    Merges all .csv files in a directory into a single file, excluding 'csv_ref_wholepic.csv'.
-
-    Args:
-        path (str): Directory containing the .csv files to merge.
-        file_name (str): Name of the output merged file.
-    """
-    from data import annotations_merge as data_annotations_merge
-    data_annotations_merge(path, file_name)
-
-
-def annotations_split(path, file_name, split=0.3, seed=None):
-    """
-    Splits a .csv annotation file into training and testing datasets, ensuring the split
-    is performed at the image level.
-
-    Args:
-        path (str): Directory containing the annotation file.
-        file_name (str): Name of the .csv file to split.
-        split (float): Proportion of data to include in the test set (default=0.3).
-        seed (int): Random seed for reproducibility (default=None).
-    """
-    from data import annotations_split as data_annotations_split
-    data_annotations_split(path, file_name, split, seed)
