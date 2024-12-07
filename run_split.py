@@ -26,8 +26,18 @@ def get_image_name(file_path):
     """
     return os.path.splitext(os.path.basename(file_path))[0]  # Returns the file name without extension
 
-def preprocess(annotations, image_path, directory_to_save_crops, patch_size=400, patch_overlap=0.0,
-               merge_name=None, split=0.3, seed=None, label=None, max_empty=None):
+def preprocess(
+    annotations,
+    image_path,
+    directory_to_save_crops,
+    patch_size=400,
+    patch_overlap=0.0,
+    merge_name=None,
+    split=0.3,
+    seed=None,
+    label=None,
+    max_empty=None,
+):
     """
     Prepares training data by splitting large images into smaller patches and creating
     relevant annotation files from shapefiles.
@@ -44,81 +54,88 @@ def preprocess(annotations, image_path, directory_to_save_crops, patch_size=400,
         label (dict or str): Label(s) to assign to annotations (default=None).
         max_empty (int): Maximum number of empty patches allowed (default=None).
     """
-    if label is not None:  # If label is provided, update the shapefiles
-        for shp in annotations:
-            # Load the shapefile using geopandas
-            gdf = gpd.read_file(shp)
-            print(f"Columns in {shp}: {gdf.columns}")
+    def ensure_label_column(shp, label):
+        """
+        Ensures the 'label' column exists in the given shapefile.
 
-            # Remove extra spaces from column names if needed
-            gdf.columns = gdf.columns.str.strip()
+        Args:
+            shp (str): Path to the shapefile.
+            label (dict or str): Labels to assign.
 
-            # Check if 'xmin', 'ymin', 'xmax', 'ymax' exist
-            required_columns = ['xmin', 'ymin', 'xmax', 'ymax']
-            missing_columns = [col for col in required_columns if col not in gdf.columns]
+        Returns:
+            str: Path to the updated shapefile.
+        """
+        gdf = gpd.read_file(shp)
+        print(f"Processing {shp}. Initial columns: {gdf.columns}")
 
-            # If the bounding box columns are missing, generate them from geometry
-            if missing_columns:
-                if 'geometry' in gdf.columns:
-                    # Generate xmin, ymin, xmax, ymax from geometry bounds
-                    gdf['xmin'] = gdf.geometry.bounds.minx
-                    gdf['ymin'] = gdf.geometry.bounds.miny
-                    gdf['xmax'] = gdf.geometry.bounds.maxx
-                    gdf['ymax'] = gdf.geometry.bounds.maxy
+        # Remove extra spaces from column names
+        gdf.columns = gdf.columns.str.strip()
+
+        # Generate bounding box columns if missing
+        required_columns = ['xmin', 'ymin', 'xmax', 'ymax']
+        if not all(col in gdf.columns for col in required_columns):
+            if 'geometry' in gdf.columns:
+                bounds = gdf.geometry.bounds
+                gdf['xmin'] = bounds['minx']
+                gdf['ymin'] = bounds['miny']
+                gdf['xmax'] = bounds['maxx']
+                gdf['ymax'] = bounds['maxy']
+            else:
+                raise KeyError(f"Missing 'geometry' column in {shp}. Cannot generate bounding boxes.")
+
+        # Add the 'label' column if missing
+        if 'label' not in gdf.columns:
+            if isinstance(label, dict):
+                image_name = get_image_name(shp)
+                if image_name in label:
+                    gdf['label'] = label[image_name]
                 else:
-                    raise KeyError(f"Missing geometry column in {shp}. Cannot generate bounding boxes.")
+                    print(f"No label found for {image_name}. Assigning default value 'Tree'.")
+                    gdf['label'] = label
+            else:
+                print(f"Adding single value label: {label}")
+                gdf['label'] = label
 
-            # Add the 'label' column if it doesn't exist
-            if 'label' not in gdf.columns:
-                if isinstance(label, dict):
-                    image_name = get_image_name(shp)  # Extract image name from shapefile
-                    if image_name in label:
-                        gdf['label'] = label[image_name]  # Assign label from dictionary
-                    else:
-                        raise ValueError(f"No label found for {image_name} in the label dictionary.")
-                else:
-                    gdf['label'] = label  # Single value assignment
+        # Save updated shapefile
+        updated_shp = shp.replace(".shp", "_updated.shp")
+        gdf.to_file(updated_shp, driver="ESRI Shapefile")
+        print(f"Updated shapefile saved to {updated_shp} with columns: {gdf.columns}")
+        return updated_shp
 
-            # Save the updated data to CSV (assuming that's what you want to do)
-            csv_file_path = shp.replace('.shp', '_updated.csv')
-            gdf.to_csv(csv_file_path, index=False)
-            print(f"Saved updated annotations to {csv_file_path}")
-
-    # Proceed with other preprocessing steps...
-    if not os.path.isdir(directory_to_save_crops):
-        os.makedirs(directory_to_save_crops)
-        print(f"Created directory: {directory_to_save_crops}")
+    # Ensure directory exists
+    os.makedirs(directory_to_save_crops, exist_ok=True)
+    print(f"Directory to save crops: {directory_to_save_crops}")
 
     # Process images and annotations
-    if isinstance(image_path, list):  # Handle list of images
+    if isinstance(image_path, list):
         assert isinstance(annotations, list), "If 'image_path' is a list, 'annotations' must also be a list"
+        assert len(image_path) == len(annotations), "Mismatch between number of images and annotations"
         for img, shp in zip(image_path, annotations):
-            print(f"Processing image: {img}, with annotations: {shp}")
+            print(f"Processing image: {img} with annotations: {shp}")
+            shp = ensure_label_column(shp, label)
             preprocess_data(directory_to_save_crops, img, shp, patch_size, patch_overlap, max_empty)
-    else:  # Handle single image
+    else:
         if image_path.endswith('.tif'):
+            print(f"Processing single image: {image_path} with annotations: {annotations}")
+            annotations = ensure_label_column(annotations, label)
             preprocess_data(directory_to_save_crops, image_path, annotations, patch_size, patch_overlap, max_empty)
         else:
-            owd = os.getcwd()
-            os.chdir(image_path)
-            tif_files = glob.glob('*.tif')
-            os.chdir(owd)
-
+            tif_files = glob.glob(os.path.join(image_path, "*.tif"))
             if annotations.endswith('.shp'):
                 for tif in tif_files:
                     print(f"Processing image: {tif} with annotations: {annotations}")
-                    preprocess_data(directory_to_save_crops, image_path + "\\" + tif, annotations, patch_size, patch_overlap,max_empty)
+                    annotations = ensure_label_column(annotations, label)
+                    preprocess_data(directory_to_save_crops, tif, annotations, patch_size, patch_overlap, max_empty)
             else:
-                os.chdir(annotations)
-                shp_files = glob.glob('*.shp')
-                assert len(tif_files) == len(shp_files), "Number of .shp-files does not match .tif-files"
+                shp_files = glob.glob(os.path.join(annotations, "*.shp"))
+                assert len(tif_files) == len(shp_files), "Number of .tif files does not match .shp files"
                 for tif, shp in zip(tif_files, shp_files):
                     print(f"Processing image: {tif} with annotations: {shp}")
-                    preprocess_data(directory_to_save_crops, image_path + "\\" + tif, shp, patch_size, patch_overlap, max_empty)
+                    shp = ensure_label_column(shp, label)
+                    preprocess_data(directory_to_save_crops, tif, shp, patch_size, patch_overlap, max_empty)
 
-    # Merging annotations
-    if merge_name is None:
-        merge_name = "csv_ref_merged.csv"
+    # Merge annotations
+    merge_name = merge_name or "csv_ref_merged.csv"
     print(f"Merging annotations into: {merge_name}")
     annotations_merge(directory_to_save_crops, merge_name)
 
@@ -126,4 +143,3 @@ def preprocess(annotations, image_path, directory_to_save_crops, patch_size=400,
     if split > 0:
         print(f"Splitting annotations into train/test with split ratio: {split}")
         annotations_split(directory_to_save_crops, merge_name, split, seed=seed)
-
