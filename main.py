@@ -28,23 +28,21 @@ args_split = {
 
 # Define train arguments
 args_train = {
-    "epochs": 20,  # Total number of epochs to train the model
+    "epochs": 50,  # Total number of epochs to train the model
     "valid_every_n_epochs": 1,  # Perform validation after every n epochs
-    "check_val_every_n_epoch": 1,  # Save model checkpoints every n epochs ( -1 saved the last and best accuracy model)
-    "augmentation_ratio": 0.5,  # Probability of applying data augmentation
+    "save_top_k": -1, # Save model checkpoints every n epochs ( -1 saved the last and best accuracy model)
+    "augmentation_ratio": 1,  # Probability of applying data augmentation
     "batch_size": 4,  # Number of samples per batch
-    "monitor": "val_classification",  # Metric to monitor during training or 'iou'
-    "score_thresh": 0.5,  # Score threshold for filtering predictions
-    "nms_thresh": 0.5,  # Non-Max Suppression (NMS) threshold for overlapping predictions
+    "monitor": "iou",  # Metric to monitor during training: 'val_classification' or 'iou'
+    "score_thresh": 0.4,  # Score threshold for filtering predictions
+    "nms_thresh": 0.05,  # Non-Max Suppression (NMS) threshold for overlapping predictions
     "optimizer_type": "SGD",  # Optimizer type (e.g., 'SGD', 'Adam', 'AdamW')
     "learning_rate": 0.001,  # Initial learning rate for the optimizer
-    "optimizer_factor": 0.1,  # Factor by which the learning rate is reduced on a plateau
-    "optimizer_patience": 5,  # Number of epochs with no improvement to wait before reducing LR
-    "optimizer_threshold": 0.001,  # Minimum change in the monitored metric to qualify as an improvement
-    "model_save_dir": r"Path\to\output_model_saved_folder",  # Directory to save model checkpoints
+    "optimizer_patience": 20,  # Number of epochs with no improvement to wait before reducing LR
+    "model_save_dir": r"Q:\MnD\projects\2024_11_01_object_detection\Deepforest\github_script\checkpoints",  # Directory to save model checkpoints
     "tb_log_dir": "tb_logs/deepforest",  # Directory to save TensorBoard logs
-    "train_csv": r"Path\to\train_csv_ref_merged.csv",  # Path to the training dataset CSV file
-    "val_csv": r"Path\to\test_csv_ref_merged.csv",  # Path to the validation dataset CSV file
+    "train_csv": r"Q:\MnD\projects\2024_11_01_object_detection\Deepforest\github_script\test\train_csv_ref_merged.csv",  # Path to the training dataset CSV file
+    "val_csv": r"Q:\MnD\projects\2024_11_01_object_detection\Deepforest\github_script\test\test_csv_ref_merged.csv",  # Path to the validation dataset CSV file
     "tensorboard_port": 6006,  # Port for TensorBoard logging
     "default_label": "Tree"  # Default label for missing values in the dataset
 }
