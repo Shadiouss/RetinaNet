@@ -6,7 +6,7 @@ from predict import process_all_tif_files_in_folder  # Import the function from 
 import warnings
 warnings.filterwarnings("ignore")
 
-# Define run_split arguments
+# Define run_split arguments (Hint: if you got an error try to change "max_empty" or "patch_size" values)
 args_split = {
     "annotations": [  # List of paths to shapefile annotations
         r"Path\to\shapefile.shp",
