@@ -138,7 +138,6 @@ def initialize_model(args):
     model.config["batch_size"] = args["batch_size"]
     model.config["num_classes"] = args["num_classes"]  # Set the number of classes
 
-
     model.train_transform = args.get("train_transform", None)
     model.val_transform = args.get("val_transform", None)
 
@@ -160,14 +159,11 @@ def initialize_model(args):
     model.scheduler = ReduceLROnPlateau(
         optimizer=model.optimizer,
         mode=mode,
-        #factor=args["optimizer_factor"],
-        patience=args["optimizer_patience"],
-        #threshold=args["optimizer_threshold"],
+        patience= args["optimizer_patience"],
         verbose=True,
     )
 
     return model
-
 
 # Custom Callbacks
 class IOULogger(Callback):
@@ -179,13 +175,9 @@ class IOULogger(Callback):
             print(f"[Epoch {trainer.current_epoch}] IoU: {iou_value} (Type: {type(iou_value)})")
             assert isinstance(iou_value, float), "IoU metric must be a float."
 
-
-
-
 class LearningRateLogger(Callback):
     def on_train_epoch_start(self, trainer, pl_module):
         print(f"[Epoch {trainer.current_epoch}] Learning Rate: {trainer.optimizers[0].param_groups[0]['lr']}")
-
 
 # Initialize Trainer
 def initialize_trainer(args):
@@ -208,22 +200,29 @@ def initialize_trainer(args):
 
     accelerator = 'gpu' if torch.cuda.is_available() else 'cpu'
 
-    trainer = Trainer(
-        max_epochs=args["epochs"],
-       # check_val_every_n_epoch=args["check_val_every_n_epoch"],
-        callbacks=[checkpoint_callback, IOULogger(), EarlyStopping(
-            monitor=monitor,
-            patience=args["optimizer_patience"],
-            verbose=True,
-            mode=mode
-        ), LearningRateMonitor(logging_interval="step")],
-        logger=logger,
-        log_every_n_steps=10,
-        val_check_interval=1.0,
-        devices=1,
-        accelerator=accelerator,
-        precision=16,
-        #gradient_clip_val=0.5,
-    )
+    if args["early_stop"]:
+        trainer = Trainer(
+            max_epochs=args["epochs"],
+            # check_val_every_n_epoch=args["check_val_every_n_epoch"],
+            callbacks=[checkpoint_callback, IOULogger(), EarlyStopping(
+                monitor=monitor,
+                patience=args["optimizer_patience"],
+                verbose=True,
+                mode=mode
+            ), LearningRateMonitor(logging_interval="step")],
+            logger=logger,
+            devices=1,
+            accelerator=accelerator,
+            precision=16,
+        )
+    else:
+        trainer = Trainer(
+            max_epochs=args["epochs"],
+            callbacks=[checkpoint_callback, IOULogger()],
+            val_check_interval=1.0, # 0.25 Runs validation after completing 25% of the training epoch. or 'int' Runs validation every 10 training batches.
+            check_val_every_n_epoch=1, # Perform a validation loop after every `N` training epochs
+            accelerator=accelerator,
+            precision=16,
+        )
 
     return trainer
